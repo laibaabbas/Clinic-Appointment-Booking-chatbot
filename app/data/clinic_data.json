@@ -1,0 +1,41 @@
+{
+  "clinic": {
+    "name": "Care Health Clinic",
+    "code": "CH",
+    "address": "123 Main Street, City",
+    "hours": "Mon-Fri 9AM - 6PM",
+    "contact": "+92-123-456789"
+  },
+  "doctors": [
+    {
+      "id": "MR",
+      "name": "Dr. Muhammad Raza",
+      "specialization": "Cardiologist",
+      "slots": ["9:00 AM", "10:00 AM", "11:00 AM", "3:00 PM"]
+    },
+    {
+      "id": "AA",
+      "name": "Dr. Ayesha Ali",
+      "specialization": "Dermatologist",
+      "slots": ["11:00 AM", "1:00 PM", "4:00 PM"]
+    },
+    {
+      "id": "HS",
+      "name": "Dr. Hamza Sheikh",
+      "specialization": "Orthopedic",
+      "slots": ["9:00 AM", "2:00 PM", "5:00 PM"]
+    },
+    {
+      "id": "SA",
+      "name": "Dr. Sara Ahmad",
+      "specialization": "Pediatrician",
+      "slots": ["10:00 AM", "12:00 PM", "3:00 PM"]
+    },
+    {
+      "id": "KA",
+      "name": "Dr. Kamran Ali",
+      "specialization": "Neurologist",
+      "slots": ["11:00 AM", "2:00 PM", "4:00 PM"]
+    }
+  ]
+}
