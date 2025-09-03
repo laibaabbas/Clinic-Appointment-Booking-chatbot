@@ -10,18 +10,18 @@ def extract_appointment_info(text: str, current_state: Dict[str, Any] = None) ->
         current_state = {}
     
     extracted = current_state.copy()
+    text_lower = text.lower()
     
-    # Simple patterns to extract information
+    # Improved patterns to extract information
     patterns = {
-        'name': r'(?:name is|I am|call me|my name is|I\'m) ([A-Za-z\s]+)',
-        'age': r'(?:age|I am|I\'m) (\d+)',
-        'doctor': r'(?:doctor|dr\.|dctor|with) ([A-Za-z\s]+)',
-        'date': r'(?:on|for|date) ([A-Za-z0-9\s,]+)',
-        'time': r'(?:at|around|time) ([0-9:]+[ap]m|[0-9]+\s*[ap]m|[0-9]+\s*o\'clock)'
+        'name': r'(?:name is|I am|call me|my name is|I\'m|named)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,2})',
+        'age': r'(?:age|I am|I\'m)\s+(\d+)',
+        'doctor': r'(?:doctor|dr\.|dctor|with|book with)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,2})',
+        'date': r'(?:on|for|date)\s+([A-Za-z0-9\s,]+)',
+        'time': r'(?:at|around|time)\s+([0-9:]+[ap]m|[0-9]+\s*[ap]m|[0-9]+\s*o\'clock)'
     }
     
     # Handle relative dates
-    text_lower = text.lower()
     today = datetime.now()
     
     if 'tomorrow' in text_lower:
@@ -49,6 +49,14 @@ def extract_appointment_info(text: str, current_state: Dict[str, Any] = None) ->
         except ValueError:
             pass
     
+    # Special handling for name extraction to avoid capturing too much
+    if 'name' in extracted and ' and ' in extracted['name']:
+        # If the name contains "and", it's likely capturing too much
+        # Try to extract just the first part before "and"
+        name_parts = extracted['name'].split(' and ')
+        if name_parts:
+            extracted['name'] = name_parts[0].strip()
+    
     return extracted
 
 def has_booking_intent(text: str) -> bool:
@@ -58,7 +66,7 @@ def has_booking_intent(text: str) -> bool:
     booking_keywords = [
         'book', 'appointment', 'schedule', 'reserve', 
         'see a doctor', 'meet with', 'visit doctor', 'confirm',
-        'yes', 'yeah', 'sure', 'ok', 'okay'
+        'yes', 'yeah', 'sure', 'ok', 'okay', 'please'
     ]
     
     text_lower = text.lower()

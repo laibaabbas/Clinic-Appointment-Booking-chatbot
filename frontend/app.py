@@ -19,15 +19,39 @@ st.markdown("""
         border-radius: 0.5rem;
         margin-bottom: 1rem;
     }
-    .user-message {
-        background-color: #000000;
+    .message {
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        line-height: 1.4;
+        max-width: 80%;
     }
+    
+    .user-message {
+        background-color: rgba(0, 123, 255, 0.1);
+        margin-left: auto;
+        border: 1px solid rgba(0, 123, 255, 0.2);
+    }
+    
     .assistant-message {
-        background-color: #000000;
+        background-color: rgba(108, 117, 125, 0.1);
+        margin-right: auto;
+        border: 1px solid rgba(108, 117, 125, 0.2);
     }
     .stButton button {
         width: 100%;
     }
+     /* Dark theme adjustments */
+    @media (prefers-color-scheme: dark) {
+        .user-message {
+            background-color: rgba(0, 123, 255, 0.15);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+        }
+        
+        .assistant-message {
+            background-color: rgba(108, 117, 125, 0.15);
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -159,17 +183,17 @@ with col2:
     # Display conversation history
     for message in st.session_state.conversation:
         if message["role"] == "user":
-            st.markdown(f'<div class="stChatMessage user-message">👤 **You:** {message["content"]}</div>', 
+            st.markdown(f'<div class="stChatMessage message user-message">👤 **You:** {message["content"]}</div>', 
                         unsafe_allow_html=True)
         else:
             if message.get("type") == "confirmation":
-                st.markdown(f'<div class="stChatMessage confirmation-message">🤖 **Assistant:** {message["content"]}</div>', 
+                st.markdown(f'<div class="stChatMessage message confirmation-message">🤖 **Assistant:** {message["content"]}</div>', 
                             unsafe_allow_html=True)
             elif message.get("type") == "confirmed":
-                st.markdown(f'<div class="stChatMessage confirmed-message">✅ **Assistant:** {message["content"]}</div>', 
+                st.markdown(f'<div class="stChatMessage message confirmed-message">✅ **Assistant:** {message["content"]}</div>', 
                             unsafe_allow_html=True)
             else:
-                st.markdown(f'<div class="stChatMessage assistant-message">🤖 **Assistant:** {message["content"]}</div>', 
+                st.markdown(f'<div class="stChatMessage message assistant-message">🤖 **Assistant:** {message["content"]}</div>', 
                             unsafe_allow_html=True)
     # If waiting for confirmation, show the confirmation button
     if st.session_state.waiting_for_confirmation and st.session_state.appointment_details:
