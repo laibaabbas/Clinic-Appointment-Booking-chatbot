@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from enum import Enum
 from datetime import datetime
-
+from langchain.memory import ConversationBufferMemory
 class Doctor(BaseModel):
     id: str
     name: str
@@ -44,4 +44,7 @@ class ConversationState(BaseModel):
     collected_data: Dict[str, Any] = {}
     missing_info: List[str] = []
     appointment: Optional[Appointment] = None
-    last_intent: str = ""
+    memory: Optional[ConversationBufferMemory] = None
+    
+    class Config:
+        arbitrary_types_allowed = True

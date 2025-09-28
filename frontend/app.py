@@ -38,6 +38,13 @@ st.markdown("""
         margin-right: auto;
         border: 1px solid rgba(108, 117, 125, 0.2);
     }
+    .confirmation-message {
+        background-color: rgba(40, 167, 69, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border-left: 3px solid #28a745;
+    }
     .stButton button {
         width: 100%;
     }
@@ -108,6 +115,15 @@ def confirm_appointment():
     except requests.exceptions.RequestException as e:
         st.error(f"Error confirming appointment: {e}")
         return {"error": "Connection error"}
+def get_conversation_history():
+    """Get the full conversation history from the backend"""
+    try:
+        response = requests.get(f"{API_URL}/history/{st.session_state.session_id}")
+        if response.status_code == 200:
+            return response.json().get("history", [])
+    except:
+        pass
+    return []
 
 def get_doctors():
     """Get list of doctors"""
@@ -179,21 +195,29 @@ with col1:
 # Right column - Chat interface
 with col2:
     st.header("Chat with Our Assistant")
+    # Get the full conversation history from backend
+    full_history = get_conversation_history()
 
+    # Display conversation history
+    for message in full_history:
+        if message["role"] == "user":
+            st.markdown(f'<div class="user-message">👤 <strong>You:</strong> {message["content"]}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="assistant-message">🤖 <strong>Assistant:</strong> {message["content"]}</div>', unsafe_allow_html=True)
     # Display conversation history
     for message in st.session_state.conversation:
         if message["role"] == "user":
-            st.markdown(f'<div class="stChatMessage message user-message">👤 **You:** {message["content"]}</div>', 
+            st.markdown(f'<div class="stChatMessage message user-message">{message["content"]}</div>', 
                         unsafe_allow_html=True)
         else:
             if message.get("type") == "confirmation":
-                st.markdown(f'<div class="stChatMessage message confirmation-message">🤖 **Assistant:** {message["content"]}</div>', 
+                st.markdown(f'<div class="stChatMessage message confirmation-message">{message["content"]}</div>', 
                             unsafe_allow_html=True)
             elif message.get("type") == "confirmed":
-                st.markdown(f'<div class="stChatMessage message confirmed-message">✅ **Assistant:** {message["content"]}</div>', 
+                st.markdown(f'<div class="stChatMessage message confirmed-message">✅ {message["content"]}</div>', 
                             unsafe_allow_html=True)
             else:
-                st.markdown(f'<div class="stChatMessage message assistant-message">🤖 **Assistant:** {message["content"]}</div>', 
+                st.markdown(f'<div class="stChatMessage message assistant-message">{message["content"]}</div>', 
                             unsafe_allow_html=True)
     # If waiting for confirmation, show the confirmation button
     if st.session_state.waiting_for_confirmation and st.session_state.appointment_details:
@@ -237,4 +261,4 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.markdown("© 2023 Care Health Clinic. All rights reserved.")
+st.markdown("© 2025 Care Health Clinic. All rights reserved.")

@@ -11,6 +11,7 @@ from .chains import create_chat_chain, create_confirmation_chain
 
 from .sheets import save_appointment_to_sheet , get_available_slots
 from .extractor import extract_appointment_info, has_booking_intent, has_info_intent
+from .memory_utils import create_memory, add_to_memory, get_memory_as_string
 
 # Load environment variables
 load_dotenv()
@@ -45,13 +46,43 @@ class ChatResponse(BaseModel):
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     session_id = request.session_id
-    
+
+
     # Initialize or get conversation state
     if session_id not in conversation_states:
-        conversation_states[session_id] = ConversationState()
+        conversation_states[session_id] = ConversationState(memory=create_memory())
     
     state = conversation_states[session_id]
     
+    
+    # Create chat chain with memory
+    chat_chain = create_chat_chain(clinic_data)
+    
+    # Get memory as string for the prompt
+    memory_string = get_memory_as_string(state.memory)
+    
+    # Get response from the chatbot
+    response_text = chat_chain.run({
+        "user_input": request.message,
+        "conversation_history": memory_string,
+        "clinic_name": clinic_data.clinic.name,
+        "clinic_address": clinic_data.clinic.address,
+        "clinic_hours": clinic_data.clinic.hours,
+        "clinic_contact": clinic_data.clinic.contact,
+        "doctors_list": "\n".join([f"- {doc.name} ({doc.specialization}): Available at {', '.join(doc.slots)}" for doc in clinic_data.doctors])
+    })
+    
+    # Ensure response is a string
+    if isinstance(response_text, dict):
+        response_text = str(response_text)
+    
+    # Add to memory
+    add_to_memory(state.memory, request.message, response_text)
+    
+    # Extract appointment information if provided
+    extracted_info = extract_appointment_info(request.message, state.collected_data)
+
+
     # Check if this is a confirmation response
     if state.current_step == "confirmation" and has_booking_intent(request.message):
         # User confirmed the appointment
@@ -77,13 +108,17 @@ async def chat(request: ChatRequest):
                     status="error"
                 )
     
-    # Create chat chain
+        
+    # Create chat chain with memory
     chat_chain = create_chat_chain(clinic_data)
+    
+    # Get memory as string for the prompt
+    memory_string = get_memory_as_string(state.memory)
     
     # Get response from the chatbot
     response_text = chat_chain.run({
         "user_input": request.message,
-        "conversation_history": str(state.collected_data),
+        "conversation_history": memory_string,
         "clinic_name": clinic_data.clinic.name,
         "clinic_address": clinic_data.clinic.address,
         "clinic_hours": clinic_data.clinic.hours,
@@ -94,6 +129,9 @@ async def chat(request: ChatRequest):
     # Ensure response is a string
     if isinstance(response_text, dict):
         response_text = str(response_text)
+    
+    # Add to memory
+    add_to_memory(state.memory, request.message, response_text)
     
     # Extract appointment information if provided
     extracted_info = extract_appointment_info(request.message, state.collected_data)
@@ -132,9 +170,13 @@ async def chat(request: ChatRequest):
             # Invalid doctor name
             doctor_names = [doc.name for doc in clinic_data.doctors]
             response_text = f"I couldn't find a doctor named '{state.collected_data['doctor']}'. Please choose from our available doctors: {', '.join(doctor_names)}"
+
             
             # Remove the invalid doctor from collected data
             state.collected_data.pop("doctor", None)
+
+            # Add to memory
+            add_to_memory(state.memory, request.message, response_text)
             
             return ChatResponse(
                 response=response_text,
@@ -170,6 +212,10 @@ async def chat(request: ChatRequest):
         # Ensure confirmation text is a string
         if isinstance(confirmation_text, dict):
             confirmation_text = str(confirmation_text)
+        
+        
+        # Add to memory
+        add_to_memory(state.memory, request.message, confirmation_text)
         
         return ChatResponse(
             response=confirmation_text,
